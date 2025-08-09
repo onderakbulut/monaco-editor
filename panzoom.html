@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panzoom Örneği</title>
+    <!-- Panzoom CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/panzoom/panzoom.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/panzoom/panzoom.umd.js"></script>
+    <!-- Fancybox CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f1f1f1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px;
+            background-color: #04AA6D;
+            color: white;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        /* Hedef sekmesi stilleri */
+        .hedef-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            justify-content: center;
+        }
+
+        .zoom-controls button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            min-width: 40px;
+        }
+
+        .zoom-controls button:hover {
+            background-color: #04AA6D;
+            color: white;
+            border-color: #04AA6D;
+        }
+
+        .zoom-controls button:active {
+            transform: translateY(1px);
+        }
+
+        /* Panzoom container */
+        .f-panzoom {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background-color: #f8f9fa;
+            background-image: 
+                linear-gradient(45deg, #e9ecef 25%, transparent 25%), 
+                linear-gradient(-45deg, #e9ecef 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e9ecef 75%), 
+                linear-gradient(-45deg, transparent 75%, #e9ecef 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            height: 100%;
+        }
+
+        .f-panzoom__content {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+        .f-panzoom__content:active {
+            cursor: grabbing;
+        }
+
+        /* Panzoom özel stilleri */
+        .f-panzoom {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Panzoom Örneği</h1>
+        </div>
+        
+        <div class="hedef-container">
+            <div class="zoom-controls">
+                <button id="zoomIn">🔍+</button>
+                <button id="zoomOut">🔍-</button>
+                <button id="zoomReset">↻</button>
+                <button id="zoomFit">⊞</button>
+                <button id="openFancybox">🖼️</button>
+            </div>
+            <div class="f-panzoom" id="myPanzoom">
+                <img class="f-panzoom__content" id="targetImage" src="image/ui.png" alt="Hedef Görsel">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Panzoom değişkeni
+        let panzoomInstance = null;
+
+        // Sayfa yüklendiğinde Panzoom'u başlat
+        document.addEventListener('DOMContentLoaded', function() {
+            initPanzoom();
+        });
+
+        // Panzoom işlevselliği
+        function initPanzoom() {
+            // DOM yüklendikten sonra çalıştır
+            setTimeout(() => {
+                const container = document.getElementById('myPanzoom');
+                
+                if (!container) {
+                    console.error('Panzoom container bulunamadı');
+                    return;
+                }
+                
+                // Panzoom global olarak mevcut mu kontrol et
+                if (typeof Panzoom === 'undefined') {
+                    console.error('Panzoom kütüphanesi yüklenmedi');
+                    return;
+                }
+                
+                // Panzoom örneğini oluştur - doğru API kullanımı
+                const options = {
+                    maxScale: 5,
+                    minScale: 1,
+                    step: 0.1,
+                    wheel: true,
+                    wheelSpeed: 0.2,
+                    panOnlyWhenZoomed: false,
+                    contain: 'outside'
+                };
+                
+                panzoomInstance = new Panzoom(container);
+                
+                // Zoom kontrol butonları için olay dinleyicileri
+                document.getElementById('zoomIn').addEventListener('click', () => {                    
+                    panzoomInstance.zoomIn();
+                });
+                
+                document.getElementById('zoomOut').addEventListener('click', () => {
+                    panzoomInstance.zoomOut();
+                });
+                
+                document.getElementById('zoomReset').addEventListener('click', () => {
+                    panzoomInstance.reset();
+                });
+                
+                document.getElementById('zoomFit').addEventListener('click', () => {
+                    // Resmi container'a sığdır
+                    panzoomInstance.zoomTo(1, { animate: true });
+                    panzoomInstance.panTo({ x: 0, y: 0 }, { animate: true });
+                });
+                
+                console.log('Panzoom başarıyla başlatıldı');
+                
+                // Fancybox butonuna tıklandığında görseli popup olarak aç
+                document.getElementById('openFancybox').addEventListener('click', () => {
+                    Fancybox.show([
+                        {
+                            src: document.getElementById('targetImage').src,
+                            caption: 'Hedef Görsel'
+                        }
+                    ]);
+                });
+                
+
+                
+            }, 500); // 500ms bekle
+        }
+    </script>
+</body>
+</html>
