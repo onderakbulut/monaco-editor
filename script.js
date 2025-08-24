@@ -251,8 +251,31 @@ function updateResult() {
 
 
 function processHtml(html, css) {
-    
-    html = html.replace('/* CSS buraya yazılacak */', css);
+    // Eğer HTML tam bir dokument değilse, onu tamamla
+    if (!html.includes('<!DOCTYPE') && !html.includes('<html')) {
+        // Basit HTML snippet'i tam dokumente çevir
+        html = `<!DOCTYPE html>
+<html>
+<head>
+<style>
+${css}
+</style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+    } else {
+        // Tam HTML dokument ise CSS'i head'e ekle
+        if (html.includes('</head>')) {
+            html = html.replace('</head>', `<style>\n${css}\n</style>\n</head>`);
+        } else if (html.includes('<head>')) {
+            html = html.replace('<head>', `<head>\n<style>\n${css}\n</style>`);
+        } else {
+            // Head yoksa body'den önce ekle
+            html = html.replace('<body>', `<head>\n<style>\n${css}\n</style>\n</head>\n<body>`);
+        }
+    }
     
     return html;
 }
